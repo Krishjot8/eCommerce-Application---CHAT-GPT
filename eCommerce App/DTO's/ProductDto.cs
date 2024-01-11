@@ -9,5 +9,5 @@
             public int ProductTypeId { get; set; }
             public int ProductBrandId { get; set; }
         
-    }
+    }  //hello
 }
