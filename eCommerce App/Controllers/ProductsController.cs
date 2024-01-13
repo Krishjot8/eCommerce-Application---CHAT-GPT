@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using eCommerce_App.Data;
 using eCommerce_App.DTOs;
+using eCommerce_App.ExceptionMiddleware;
 using eCommerce_App.Models;
+using eCommerce_App.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -14,52 +16,102 @@ namespace eCommerce_App.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        private readonly ECommerceContext _context;
+        private readonly IProductRepository _productRepository;
         private readonly IMapper _mapper;
+        private readonly ILogger<ProductsController> _logger;  
 
-        public ProductsController(ECommerceContext context, IMapper mapper)
+        public ProductsController(IProductRepository productRepository, IMapper mapper, ILogger<ProductsController> logger)
         {
-            _context = context;
+
+            _productRepository = productRepository;
             _mapper = mapper;
+            _logger = logger;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts()
         {
-            var products = await _context.Products.ToListAsync();
+
+
+
+            var products = await _productRepository.GetProductsAsync();
             var productDtos = _mapper.Map<List<ProductDto>>(products);
             return Ok(productDtos);
         }
 
+
+
+
         [HttpGet("{id}")]
         public async Task<ActionResult<ProductDto>> GetProduct(int id)
         {
-            var product = await _context.Products.FindAsync(id);
 
-            if (product == null)
+            try
+
             {
-                return NotFound();
+
+                var product = await _productRepository.GetProductByIdAsync(id);
+
+                if (product == null)
+                {
+                    return NotFound(new { Message = "The product or ID you are searching for does not exist" });
+                }
+
+                var productDto = _mapper.Map<ProductDto>(product);
+                return Ok(productDto);
+
             }
 
-            var productDto = _mapper.Map<ProductDto>(product);
-            return Ok(productDto);
+            catch (Exception ex)
+            {
+
+                _logger.LogError(ex, "The product or ID you are searching for does not exist");
+
+
+
+
+                return StatusCode(404, "The product or ID you are searching for does not exist");
+
+
+
+
+            }
+
+
         }
 
         [HttpPost]
         public async Task<ActionResult<ProductDto>> PostProduct(ProductDto productDto)
         {
 
-            var product = _mapper.Map<Product>( productDto);
+            try
 
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
+            {
+                var product = _mapper.Map<Product>(productDto);
+
+                await _productRepository.AddProductAsync(product);
+
+                var createdProductDto = _mapper.Map<ProductDto>(product);
+
+                //Return the created productDto or another appropriate response
+                return CreatedAtAction(nameof(GetProduct), new { id = createdProductDto.Id }, createdProductDto);
+
+            }
+
+            catch (Exception ex)
+
+            {
 
 
-            var createdProductDto = _mapper.Map<ProductDto>(product);
+                return StatusCode(StatusCodes.Status500InternalServerError, new ApiErrorResponse { Message = "There was an Internal Server Error" });
 
-            // Return the created productDto or another appropriate response
-            return CreatedAtAction(nameof(GetProduct), new { id = createdProductDto.Id }, createdProductDto);
+
+            }
         }
+
+
+
+
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutProduct(int id, ProductDto updatedProductDto)
@@ -69,63 +121,59 @@ namespace eCommerce_App.Controllers
                 return BadRequest();
             }
 
-            var existingProduct = await _context.Products.FindAsync(id);
+            var existingProduct = await _productRepository.GetProductByIdAsync(id);
 
             if (existingProduct == null)
             {
                 return NotFound();
             }
 
-
-            _mapper.Map( updatedProductDto ,existingProduct);
-
+            _mapper.Map(updatedProductDto, existingProduct);
             try
             {
 
+                await _productRepository.UpdateProductAsync(existingProduct);
 
-                await _context.SaveChangesAsync();
+                await _productRepository.SaveChangesAsync();
+
             }
 
             catch (DbUpdateConcurrencyException)
             {
-
-                if (!_context.Products.Any(p => p.Id == id))
+                if (await _productRepository.ProductExistsAsync(id))
+                {
+                    return NotFound();
+                }
+                else
                 {
 
-                    return NotFound();
-
-                }
-                else {
-
-
-
                     throw;
-                
                 }
-           
             }
 
             return NoContent();
+        
+
+            //}
+
+            //[HttpDelete("{id}")]
+            //public async Task<IActionResult> DeleteProduct(int id)
+            //{
+            //    var productToRemove = await _context.Products.FindAsync(id);
+
+            //    if (productToRemove == null)
+            //    {
+            //        return NotFound();
+            //    }
+
+            //    _context.Products.Remove(productToRemove);
+            //    await _context.SaveChangesAsync();
+
+            //    return NoContent();
+            //}
 
 
         }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(int id)
-        {
-            var productToRemove = await _context.Products.FindAsync(id);
-
-            if (productToRemove == null)
-            {
-                return NotFound();
-            }
-
-            _context.Products.Remove(productToRemove);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-     
     }
+
 }
