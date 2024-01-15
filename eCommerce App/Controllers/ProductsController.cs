@@ -18,7 +18,7 @@ namespace eCommerce_App.Controllers
     {
         private readonly IProductRepository _productRepository;
         private readonly IMapper _mapper;
-        private readonly ILogger<ProductsController> _logger;  
+        private readonly ILogger<ProductsController> _logger;
 
         public ProductsController(IProductRepository productRepository, IMapper mapper, ILogger<ProductsController> logger)
         {
@@ -27,6 +27,11 @@ namespace eCommerce_App.Controllers
             _mapper = mapper;
             _logger = logger;
         }
+
+
+
+
+
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts()
@@ -80,6 +85,9 @@ namespace eCommerce_App.Controllers
 
         }
 
+
+
+
         [HttpPost]
         public async Task<ActionResult<ProductDto>> PostProduct(ProductDto productDto)
         {
@@ -98,7 +106,7 @@ namespace eCommerce_App.Controllers
 
             }
 
-            catch (Exception ex)
+            catch (Exception)
 
             {
 
@@ -152,28 +160,77 @@ namespace eCommerce_App.Controllers
             }
 
             return NoContent();
-        
-
-            //}
-
-            //[HttpDelete("{id}")]
-            //public async Task<IActionResult> DeleteProduct(int id)
-            //{
-            //    var productToRemove = await _context.Products.FindAsync(id);
-
-            //    if (productToRemove == null)
-            //    {
-            //        return NotFound();
-            //    }
-
-            //    _context.Products.Remove(productToRemove);
-            //    await _context.SaveChangesAsync();
-
-            //    return NoContent();
-            //}
 
 
         }
-    }
 
+
+        [HttpDelete("{id}")]
+
+        public async Task<ActionResult> DeleteProduct(int id)
+        {
+            try {
+
+                var product = await _productRepository.GetProductByIdAsync(id);
+
+                if (product == null) 
+                {
+
+                    return NotFound(new { message = "Not Found" });
+                }
+
+                await _productRepository.DeleteProductAsync(id);
+
+                _logger.LogInformation($"Product with ID {id} deleted.");
+
+                return NoContent();
+            }
+            catch (Exception ex)
+           
+            {
+                _logger.LogError(ex,"Error deleting the product");
+                return StatusCode(500, "An error occured while processing your request");
+            }
+
+        
+        
+        
+        }
+           
+
+
+            
+
+
+
+        [HttpGet("brands")]
+        public async Task<ActionResult<IEnumerable<ProductBrandDto>>> GetProductBrands()
+        {
+
+
+
+            var productbrands = await _productRepository.GetProductBrandsAsync();
+            var productBrandDtos = _mapper.Map<List<ProductBrandDto>>(productbrands);
+            return Ok(productBrandDtos);
+        }
+
+
+
+        [HttpGet("types")]
+        public async Task<ActionResult<IEnumerable<ProductTypeDto>>> GetProductTypes()
+        {
+
+
+
+            var producttypes = await _productRepository.GetProductTypesAsync();
+            var productTypeDtos = _mapper.Map<List<ProductTypeDto>>(producttypes);
+            return Ok(productTypeDtos);
+
+        }
+
+
+
+    }
 }
+
+

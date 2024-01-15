@@ -89,8 +89,6 @@ catch (Exception ex)
 //Data Seeding Stops Here
 
 
-
-
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
@@ -98,3 +96,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+
+
+  

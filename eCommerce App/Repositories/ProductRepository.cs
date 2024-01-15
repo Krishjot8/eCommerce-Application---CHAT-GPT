@@ -24,6 +24,28 @@ namespace eCommerce_App.Repositories
                 .ToListAsync();
         }
 
+        public async Task<Product> GetProductByIdAsync(int id)
+        {
+
+
+
+
+            var product = await _context.Products
+                 .Include(p => p.ProductType)
+                 .Include(p => p.ProductBrand)
+                 .FirstOrDefaultAsync(p => p.Id == id);
+
+
+
+            return product;
+
+
+
+
+
+
+
+        }
 
 
 
@@ -80,65 +102,51 @@ namespace eCommerce_App.Repositories
             
             }
 
-
-
             return product; 
         }
 
-        public Task DeleteProductAsync(int id)
+
+
+        public async Task<Product>DeleteProductAsync(int id)
         {
-            throw new NotImplementedException();
-        }
+            var product = await GetProductByIdAsync(id);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        public async Task<Product> GetProductByIdAsync(int id)
-        {
-
+            if (product != null) {
             
             
+                _context.Products.Remove(product);
 
-                var product = await _context.Products
-                     .Include(p => p.ProductType)
-                     .Include(p => p.ProductBrand)
-                     .FirstOrDefaultAsync(p => p.Id == id);
-
-          
+                await _context.SaveChangesAsync();
 
                 return product;
-            
 
+            }
 
-   
-
-
-
+            return null;
         }
 
-        private Product StatusCodes(int v1, string v2)
-        {
-            throw new NotImplementedException();
 
 
-        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+     
+       
 
         public async Task<IList<ProductBrand>> GetProductBrandsAsync()
         {
@@ -149,12 +157,6 @@ namespace eCommerce_App.Repositories
         {
             return await _context.ProductTypes.ToListAsync();
         }
-
-
-        //private Product StatusCodes(int v1, string v2)
-        //{
-        //    throw new NotImplementedException();
-        //}
 
 
    

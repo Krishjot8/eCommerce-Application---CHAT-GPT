@@ -13,6 +13,11 @@ namespace eCommerce_App.MappingProfiles
             CreateMap<Product, ProductDto>();
             CreateMap<ProductDto, Product>();
 
+            CreateMap<ProductBrand, ProductBrandDto>();
+            CreateMap<ProductBrandDto, ProductBrand>();
+
+            CreateMap<ProductType, ProductTypeDto>();
+            CreateMap<ProductTypeDto, ProductType>();
 
         }
 
