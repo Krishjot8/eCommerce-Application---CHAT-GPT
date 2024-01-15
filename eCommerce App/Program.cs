@@ -2,6 +2,8 @@ using eCommerce_App.Data;
 using eCommerce_App.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,22 +52,44 @@ using var scope = app.Services.CreateScope();
 var services = scope.ServiceProvider;
 var context = services.GetRequiredService<ECommerceContext>();
 var logger = services.GetService<ILogger<Program>>();
+var loggerFactory = services.GetService<ILoggerFactory>();
 
 try
 
 {
     await context.Database.MigrateAsync();
-    await eCommerceContextSeed.SeedAsync(context);
+    await eCommerceContextSeed.SeedDataAsync(context, loggerFactory);
+}
+
+catch (DbUpdateException ex)
+
+
+{
+
+    logger.LogError(ex, "an error occured during migration. Check if the database schema is compatible with the model.");
+
+}
+catch (JsonException ex)
+
+
+{
+
+    logger.LogError(ex, "an error occured during seeding Check the format of the JSON Data");
+
 }
 
 catch (Exception ex)
 
+
 {
 
-    logger.LogError(ex, "an error occured during migration");
+    logger.LogError(ex, "an unexpected error occured during migration or seeding.");
 
 }
 //Data Seeding Stops Here
+
+
+
 
 app.UseHttpsRedirection();
 
