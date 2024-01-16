@@ -24,7 +24,7 @@ options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
-
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
 
 //AutoMapper
